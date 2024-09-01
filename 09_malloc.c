@@ -4,18 +4,32 @@
 
 #define MAX_EMPLOYEES 1000
 
+
+
 struct employee_t {
   int id;
   int hourly_rate;
   bool staff;
 };
 
-void initialize_employee(struct employee_t *pE) {
-  pE->id = 0;
+int initialize_employee(struct employee_t *pE) {
+  // the static keyword will initialize this variable in global scope, but only we have access to it
+  // Every time the function gets called, this variable doesn't change its value
+  static int num_employees = 0;
+
+  // every time the function runs, we can increment it and its value will not reset.
+  // By creating a static variable, we are able to create variables that out live the lifetime 
+  // of a function call and track data over multiple calls to the same function.
+  // This variable lives in what's called the data section of the ELF, it doesn't get destroyed
+  // when the function returns.
+  // This is called data hiding, other functions can't access this variable to prevent race conditions
+  num_employees++;
+
+  pE->id = num_employees;
   pE->hourly_rate = 0;
   pE->staff = false;
 
-  return;
+  return num_employees;
 }
 
 int main() {
@@ -36,9 +50,10 @@ int main() {
     // -1 is bad error code, letting us know the code failed
     return -1;
   }
-  initialize_employee(&employees[0]);
-
-  printf("%d\n", employees[0].hourly_rate);
+  for (int i = 0; i < n; i++) {
+    int id = initialize_employee(&employees[i]);
+    printf("New employee, ID is %d\n", id);
+  }
 
   // Once the code is done, we need to give the memory back to the memory allocator
   // So we can avoid what is called a memory leak
@@ -53,5 +68,5 @@ int main() {
   employees = NULL;
   // By freeing the memory and deleting the pointer we give oursleves, we remove ourselves the power
   // Of being able to accidentally use it the future, or else we can crash the program.  
-  printf("%d\n", employees[0].hourly_rate);
+  printf("%d\n", employees[0].id);
 }
